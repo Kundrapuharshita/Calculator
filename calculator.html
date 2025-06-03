@@ -1,0 +1,244 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calculator with History</title>
+  <style>
+    body {
+      background-color:black;
+      color: #fff;
+      font-family: 'Segoe UI', sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .calculator {
+      background-color:LightGray;
+      padding: 20px;
+      border-radius: 15px;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.5);
+      width: 320px;
+      position: relative;
+    }
+    .display {
+      background-color: white;
+      color: #0f0;
+      font-size: 2.5em;
+      padding: 20px;
+      text-align: right;
+      border-radius: 10px;
+      margin-bottom: 20px;
+      min-height: 60px;
+      overflow-x: auto;
+    }
+    .buttons {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+    }
+    .btn {
+      padding: 20px;
+      font-size: 1.5em;
+      border: none;
+      border-radius: 10px;
+      background-color: #333;
+      color: white;
+      cursor: pointer;
+      transition: background-color 0.3s;
+    }
+    .btn:hover {
+      background-color: #444;
+    }
+    .operator {
+      background-color: #0066cc;
+    }
+    .operator:hover {
+      background-color: #005bb5;
+    }
+    .equal {
+      background-color: #28a745;
+      color: white;
+    }
+    .equal:hover {
+      background-color: #218838;
+    }
+    .history {
+      margin-top: 20px;
+      background-color: #333;
+      padding: 15px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .history h3 {
+      margin: 0;
+      font-size: 1.2em;
+      color: #0f0;
+    }
+    .history ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+    .history li {
+      color: #ccc;
+      font-size: 1em;
+      margin-bottom: 5px;
+    }
+    .history-toggle, .settings-toggle {
+      position: absolute;
+      top: -45px;
+      font-size:2em;
+      cursor: pointer;
+      color: white;
+    }
+    .history-toggle {
+      left: 10px;
+    }
+    .settings-toggle {
+      left: 70px;
+    }
+    .settings {
+      display: none;
+      position: absolute;
+      top: 50px;
+      right: 10px;
+      background-color: #444;
+      padding: 10px;
+      border-radius: 10px;
+      box-shadow: 0 0 10px rgba(0, 0, 0, 0.5);
+    }
+    .settings label {
+      color: white;
+      font-size: 1em;
+    }
+    .settings input {
+      margin-left: 10px;
+    }
+  </style>
+</head>
+<body>
+  <div class="calculator">
+<div>
+    <span class="history-toggle" onclick="toggleHistory()">🕒</span>
+    <span class="settings-toggle" onclick="toggleSettings()">⚙️</span>
+</div>
+    <div class="display" id="display"></div>
+    <div class="buttons">
+      <button class="btn operator" onclick="clearDisplay()">AC</button>
+      <button class="btn operator" onclick="deleteLast()">&larr;</button>
+      <button class="btn operator" onclick="appendValue('+/-')">+/-</button>
+      <button class="btn operator" onclick="appendValue('/')">÷</button>
+      <button class="btn" onclick="appendValue('7')">7</button>
+      <button class="btn" onclick="appendValue('8')">8</button>
+      <button class="btn" onclick="appendValue('9')">9</button>
+      <button class="btn operator" onclick="appendValue('*')">×</button>
+      <button class="btn" onclick="appendValue('4')">4</button>
+      <button class="btn" onclick="appendValue('5')">5</button>
+      <button class="btn" onclick="appendValue('6')">6</button>
+      <button class="btn operator" onclick="appendValue('-')">−</button>
+      <button class="btn" onclick="appendValue('1')">1</button>
+      <button class="btn" onclick="appendValue('2')">2</button>
+      <button class="btn" onclick="appendValue('3')">3</button>
+      <button class="btn operator" onclick="appendValue('+')">+</button>
+      <button class="btn" onclick="appendValue('%')">%</button>
+      <button class="btn" onclick="appendValue('0')">0</button>
+      <button class="btn" onclick="appendValue('.')">.</button>
+      <button class="btn equal" onclick="calculate()">=</button>
+    </div>
+    <div class="history" id="history">
+      <h3>History</h3>
+      <ul id="historyList"></ul>
+    </div>
+    <div class="settings" id="settings">
+      <label for="soundToggle">Sound</label>
+      <input type="checkbox" id="soundToggle" checked>
+    </div>
+  </div>
+<script>
+let display = document.getElementById("display");
+let historyDiv = document.getElementById("history");
+let historyList = document.getElementById("historyList");
+let settingsDiv = document.getElementById("settings");
+let soundToggle = document.getElementById("soundToggle");
+let soundEnabled = true;
+let history = [];
+
+function toggleHistory() {
+  historyDiv.style.display = historyDiv.style.display === "none" ? "block" : "none";
+}
+
+function toggleSettings() {
+  settingsDiv.style.display = settingsDiv.style.display === "none" ? "block" : "none";
+}
+
+soundToggle.addEventListener("change", function() {
+  soundEnabled = this.checked;
+});
+
+function playSound() {
+  if (soundEnabled) {
+    let audio = new Audio("https://res.cloudinary.com/dekttdx5z/video/upload/v1506271391/_CALC_Sound_Button_1_zlysk4.mp3");
+    audio.play();
+  }
+}
+
+function appendValue(val) {
+  playSound();
+  if (val === "+/-") {
+    if (display.innerText) {
+      display.innerText = (parseFloat(display.innerText) * -1).toString();
+    }
+  } else {
+    display.innerText += val;
+  }
+}
+
+function clearDisplay() {
+  playSound();
+  display.innerText = "";
+}
+
+function deleteLast() {
+  playSound();
+  display.innerText = display.innerText.slice(0, -1);
+}
+
+function calculate() {
+  playSound();
+  try {
+    let expression = display.innerText.replace(/%/g, "/100");
+    let result = new Function("return " + expression)();
+    // Add full expression with result to history
+    addToHistory(display.innerText + " = " + result);
+    display.innerText = result;
+  } catch (error) {
+    display.innerText = "Error";
+  }
+}
+
+function addToHistory(calculation) {
+  history.unshift(calculation);
+  if (history.length > 5) {
+    history.pop();
+  }
+  updateHistoryDisplay();
+}
+
+function updateHistoryDisplay() {
+  historyList.innerHTML = "";
+  history.forEach(item => {
+    let listItem = document.createElement("li");
+    listItem.textContent = item;
+    historyList.appendChild(listItem);
+  });
+}
+</script>
+</body>
+</html>
+
+  
